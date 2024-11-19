@@ -1,0 +1,16 @@
+# Node.js dependencies
+node_modules/
+
+# Logs
+logs/
+*.log
+
+# Environment variables
+.env
+
+# Firebase private key
+firebaseServiceAccountKey.json
+
+# System files
+.DS_Store
+Thumbs.db
