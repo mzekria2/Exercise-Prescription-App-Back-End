@@ -14,7 +14,10 @@ Cron jobs check and trigger notifications at the scheduled time.
 ### API Endpoints:
 
 **Create or Update a Schedule: POST /api/schedule**
-Sample body: {
+
+Sample body:
+```json
+{
   "userId": "testUser",
   "fcmToken": "valid_fcm_token",
   "notifications": [
@@ -24,6 +27,8 @@ Sample body: {
     }
   ]
 }
+```
+
 
 **Get User Schedules: GET /api/schedule/:userId**
 
