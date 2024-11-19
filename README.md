@@ -1,9 +1,9 @@
-#Exercise Prescription App - Backend
+# Exercise Prescription App - Backend
 This repository contains the backend implementation for the Exercise Prescription App, which enables users to schedule notifications for their therapy exercises. The backend is built using Node.js with Express and MongoDB as the database. Notifications are sent via Firebase Cloud Messaging (FCM).
 
-##Features
+## Features
 
-###User Schedule Management:
+### User Schedule Management:
 Users can schedule multiple notifications for their therapy exercises.
 Notifications include a message and a scheduled time.
 
@@ -11,7 +11,7 @@ Notifications are sent using Firebase Cloud Messaging.
 Cron jobs check and trigger notifications at the scheduled time.
 
 
-###API Endpoints:
+### API Endpoints:
 
 **Create or Update a Schedule: POST /api/schedule**
 Sample body: {
@@ -29,7 +29,7 @@ Sample body: {
 
 **Delete User Schedule: DELETE /api/schedule/:userId**
 
-###Technologies Used
+### Technologies Used
 Node.js: Server-side JavaScript runtime.
 Express: Web framework for building APIs.
 MongoDB: NoSQL database for storing schedules.
@@ -38,7 +38,7 @@ Mongoose: MongoDB object modeling tool.
 node-cron: For scheduling tasks.
 
 
-###Testing Notifications
+### Testing Notifications
 **1. Scheduling Notifications**
 Use Postman or cURL to create a schedule. Ensure the time is in UTC.
 
