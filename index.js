@@ -4,6 +4,8 @@ const mongoose = require('mongoose');
 const path = require('path');
 const fs = require('fs');
 require('dotenv').config();
+const videoRoutes = require('./routes/videos');
+
 
 // Initialize express app
 const app = express();
@@ -15,6 +17,11 @@ const mongoURI = `mongodb+srv://${process.env.MONGODB_USER}:${process.env.MONGOD
 mongoose.connect(mongoURI, { useNewUrlParser: true, useUnifiedTopology: true })
   .then(() => console.log('MongoDB connected'))
   .catch((err) => console.log('MongoDB connection error: ', err));
+
+
+
+
+app.use('/videos', videoRoutes);
 
 // Start the server
 app.listen(PORT, () => {
