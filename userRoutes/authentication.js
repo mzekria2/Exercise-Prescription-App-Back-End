@@ -2,12 +2,13 @@ const express = require('express');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
+const authenticateMiddleware = require('../middleware/authenticateMiddleware')
 
 const router = express.Router();
 
 // Register for stuff
 router.post('/register', async (req, res) => {
-  const { email, password } = req.body;
+  const { email, password, name} = req.body;
 
   try {
     //check if user already registered
@@ -19,7 +20,7 @@ router.post('/register', async (req, res) => {
     const hashedPassword = await bcrypt.hash(password, salt);
 
     // Create new user
-    user = new User({ email, password: hashedPassword });
+    user = new User({ email, password: hashedPassword, name });
     await user.save();
 
     res.status(201).json({ message: 'User created successfully' });
@@ -48,5 +49,41 @@ router.post('/login', async (req, res) => {
     res.status(500).json({ message: 'Server error' });
   }
 });
+
+// GET /api/auth/profile
+router.get('/profile', authenticateMiddleware, async (req, res) => {
+  try {
+    // Fetch user by ID, excluding password
+    const user = await User.findById(req.user.userId).select('-password');
+    if (!user) return res.status(404).json({ message: 'User not found' });
+
+    res.json(user);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// PUT /api/auth/profile
+router.put('/profile', authenticateMiddleware, async (req, res) => {
+  const { email, name } = req.body;
+
+  try {
+    // Update user fields
+    const updatedUser = await User.findByIdAndUpdate(
+      req.user.userId,
+      { email, name },
+      { new: true, runValidators: true } // Return the updated user
+    ).select('-password'); // Exclude the password
+
+    if (!updatedUser) return res.status(404).json({ message: 'User not found' });
+
+    res.json(updatedUser);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
 
 module.exports = router;

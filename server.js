@@ -21,8 +21,6 @@ app.get('/api/protected', authMiddleware, (req, res) => {
   });
 });
 
-
-
 // Import routes
 const authRoutes = require('./userRoutes/authentication');
 
@@ -38,3 +36,4 @@ mongoose.connect(process.env.MONGODB_URI)
     app.listen(PORT, () => console.log(`Server is running on port ${PORT}`));
   })
   .catch((err) => console.error('Could not connect to MongoDB:', err));
+
