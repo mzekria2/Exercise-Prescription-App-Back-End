@@ -1,8 +1,7 @@
 const express = require('express');
-const multer = require('multer');
 const mongoose = require('mongoose');
-const path = require('path');
 const fs = require('fs');
+const cors = require('cors');
 require('dotenv').config();
 const videoRoutes = require('./routes/videos');
 
@@ -19,7 +18,10 @@ mongoose.connect(mongoURI, { useNewUrlParser: true, useUnifiedTopology: true })
   .catch((err) => console.log('MongoDB connection error: ', err));
 
 
-
+// Allow requests from http://localhost:8081
+app.use(cors({
+  origin: 'http://localhost:8081'
+}));
 
 app.use('/videos', videoRoutes);
 

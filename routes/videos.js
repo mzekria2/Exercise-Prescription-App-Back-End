@@ -26,7 +26,8 @@ const storage = multer.diskStorage({
   const upload = multer({ storage });
 
  // Route for uploading videos
-router.post('/upload', upload.single('video'), async (req, res) => {
+router.post('/upload', upload.single('file'), async (req, res) => {
+    console.log('in backend ',req.file)
     if (!req.file) {
       return res.status(400).json({ message: 'No file uploaded.' });
     }
