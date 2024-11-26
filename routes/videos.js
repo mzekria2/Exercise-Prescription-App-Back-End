@@ -25,9 +25,40 @@ const storage = multer.diskStorage({
   });
   const upload = multer({ storage });
 
- // Route for uploading videos
+
+router.get('/allVideos', async (req,res) => {
+    try{
+        //retrieving all videos
+        const all_videos = await Video.find();
+        console.log("in all videos")
+        //sending back response
+        res.status(200).json(all_videos);
+    } catch(error){
+        console.error("Error fetching videos:", error);
+        res.status(500).json({ message: "Failed to fetch videos", error });
+    }
+});
+
+
+// Endpoint to stream the video by ID
+router.get('/video/:id', async (req, res) => {
+  const videoId = req.params.id;
+
+  const one_vid = await Video.findOne({_id: videoId});
+
+  const videoPath = one_vid.path;
+  // Check if the file exists
+  if (!fs.existsSync(videoPath)) {
+    return res.status(404).send('Video not found');
+  } 
+  // Stream the video
+  const videoStream = fs.createReadStream(videoPath);
+  res.setHeader('Content-Type', 'video/mp4'); // Set the video content type
+  videoStream.pipe(res); // Pipe the video to the response
+});
+
+//Route for uploading videos
 router.post('/upload', upload.single('file'), async (req, res) => {
-    console.log('in backend ',req.file)
     if (!req.file) {
       return res.status(400).json({ message: 'No file uploaded.' });
     }
