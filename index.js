@@ -1,14 +1,11 @@
 const express = require('express');
-const multer = require('multer');
 const mongoose = require('mongoose');
-const path = require('path');
-const fs = require('fs');
 const cors = require('cors');
 
 require('dotenv').config();
 
 const scheduleRoutes = require('./routes/schedule-routes'); // Schedule routes
-require('./utils/notificationScheduler'); // Initialize the notification scheduler
+//require('./utils/notificationScheduler'); // Initialize the notification scheduler
 // Initialize express app
 const app = express();
 const PORT = process.env.PORT || 3000;
