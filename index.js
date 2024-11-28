@@ -13,15 +13,17 @@ const PORT = process.env.PORT || 3000;
 // MongoDB connection
 const mongoURI = `mongodb+srv://${process.env.MONGODB_USER}:${process.env.MONGODB_PASS}@${process.env.MONGODB_URL}/`
 
-mongoose.connect(mongoURI, { useNewUrlParser: true, useUnifiedTopology: true })
+mongoose.connect(mongoURI)
   .then(() => console.log('MongoDB connected'))
   .catch((err) => console.log('MongoDB connection error: ', err));
 
 
 // Allow requests from http://localhost:8081
 app.use(cors({
-  //'http://localhost:8081'
-  origin: 'exp://172.30.15.219:8081'
+  
+  origin: 'http://localhost:8081'
+  //origin: 'exp://172.30.15.219:8081'
+ // origin: 'exp://10.21.28.107:8081'
 }));
 
 app.use('/videos', videoRoutes);

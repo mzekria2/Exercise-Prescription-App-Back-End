@@ -26,6 +26,42 @@ const storage = multer.diskStorage({
   const upload = multer({ storage });
 
 
+
+router.delete('/delete_video/:id', async (req, res) => {
+    console.log('In delete video endpoint');
+    const videoId = req.params.id;
+
+    try {
+        // Find the video by ID
+        console.log(videoId);
+        const video = await Video.findById(videoId);
+        console.log(video, ' video found by id');
+        if (!video) {
+            return res.status(404).json({ message: 'Video not found' });
+        }
+
+        // Build the absolute path to the video file
+        const filePath = path.resolve(video.path);
+
+        // Check if the file exists before deleting
+        if (fs.existsSync(filePath)) {
+            fs.unlinkSync(filePath);
+            console.log('File deleted:', filePath);
+        } else {
+            console.warn('File does not exist:', filePath);
+        }
+
+        // Delete the video record from the database
+        await Video.findByIdAndDelete(videoId);
+
+        res.status(200).json({ message: 'Video deleted successfully' });
+    } catch (error) {
+        console.error("Error deleting video:", error);
+        res.status(500).json({ message: 'Failed to delete video', error });
+    }
+});
+
+
 router.get('/allVideos', async (req,res) => {
     try{
         //retrieving all videos
@@ -59,6 +95,7 @@ router.get('/video/:id', async (req, res) => {
 
 //Route for uploading videos
 router.post('/upload', upload.single('file'), async (req, res) => {
+    console.log('Received file:', req.file); // Log file details
     if (!req.file) {
       return res.status(400).json({ message: 'No file uploaded.' });
     }
