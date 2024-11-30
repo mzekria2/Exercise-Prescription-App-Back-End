@@ -1,12 +1,14 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const dotenv = require('dotenv');
+const cors = require('cors'); 
 const authMiddleware = require('./middleware/authenticateMiddleware');
 
 dotenv.config();
 
 const app = express();
 
+app.use(cors());
 //parse JSON
 app.use(express.json());
 
