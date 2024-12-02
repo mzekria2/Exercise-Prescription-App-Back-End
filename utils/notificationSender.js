@@ -6,23 +6,24 @@ admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
 });
 
-const sendNotification = async (fcmToken, message) => {
-  const payload = {
-    notification: {
-      title: 'Exercise Reminder',
-      body: message,
-    },
-  };
-
+const sendNotification = async (schedule) => {
   try {
-    // Correct way to send to a device
-    const response = await admin.messaging().send({
-      token: fcmToken,
-      notification: payload.notification,
-    });
-    console.log('Notification sent successfully:', response);
+    const { fcmTokens, notifications } = schedule;
+
+    // Iterate through all tokens and send notifications
+    for (const token of fcmTokens) {
+      for (const notification of notifications) {
+        await admin.messaging().send({
+          token,
+          notification: {
+            title: "Reminder",
+            body: notification.message,
+          },
+        });
+      }
+    }
   } catch (error) {
-    console.error('Error sending notification:', error);
+    console.error("Error sending notifications:", error);
   }
 };
 
