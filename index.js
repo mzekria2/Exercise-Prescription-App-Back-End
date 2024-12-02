@@ -3,6 +3,8 @@ const mongoose = require('mongoose');
 const cors = require('cors');
 
 require('dotenv').config();
+const videoRoutes = require('./routes/videos');
+
 
 const scheduleRoutes = require('./routes/schedule-routes'); // Schedule routes
 // Initialize express app
@@ -21,6 +23,11 @@ const mongoURI = `mongodb+srv://${process.env.MONGODB_USER}:${process.env.MONGOD
 mongoose.connect(mongoURI, { useNewUrlParser: true, useUnifiedTopology: true })
   .then(() => console.log('MongoDB connected'))
   .catch((err) => console.log('MongoDB connection error: ', err));
+
+
+
+
+app.use('/videos', videoRoutes);
 
 // Start the server
 app.listen(PORT, () => {
