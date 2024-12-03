@@ -23,7 +23,7 @@ app.use(cors({
   
   origin: 'http://localhost:8081'
   //origin: 'exp://172.30.15.219:8081'
- // origin: 'exp://10.21.28.107:8081'
+ //origin: 'exp://10.21.28.107:8081'
 }));
 
 app.use('/videos', videoRoutes);
