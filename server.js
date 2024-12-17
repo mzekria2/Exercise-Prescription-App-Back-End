@@ -1,21 +1,52 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const dotenv = require('dotenv');
-const cors = require('cors'); 
-const authMiddleware = require('./middleware/authenticateMiddleware');
+const cors = require('cors');
+const path = require('path');
+const fs = require('fs');
 
+const authMiddleware = require('./middleware/authenticateMiddleware');
+const videoRoutes = require('./routes/videos');
+const authRoutes = require('./userRoutes/authentication');
+
+
+// Load environment variables
 dotenv.config();
 
 const app = express();
+const PORT = process.env.PORT || 3000;
+const mongoURI = process.env.MONGODB_URI;
 
-app.use(cors());
-//parse JSON
+// Middleware
+app.use(cors({ origin: '*' }));
 app.use(express.json());
 
+// MongoDB connection
+if (!mongoURI) {
+  console.error('Error: MONGODB_URI is not defined in the environment variables.');
+  process.exit(1);
+}
+
+mongoose
+  .connect(mongoURI, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+  })
+  .then(() => {
+    console.log('Connected to MongoDB');
+  })
+  .catch((err) => {
+    console.error('Could not connect to MongoDB:', err.message);
+    process.exit(1);
+  });
+
+
+// Root endpoint
 app.get('/', (req, res) => {
   res.send('Server is running!');
 });
 
+// Protected route example
 app.get('/api/protected', authMiddleware, (req, res) => {
   res.json({
     message: 'This is a protected route.',
@@ -23,19 +54,17 @@ app.get('/api/protected', authMiddleware, (req, res) => {
   });
 });
 
-// Import routes
-const authRoutes = require('./userRoutes/authentication');
-
 // Use routes
 app.use('/api/auth', authRoutes);
+app.use('/videos', videoRoutes);
 
-// Connect to MongoDB
-mongoose.connect(process.env.MONGODB_URI)
-  .then(() => {
-    console.log('Connected to MongoDB');
-    // Start the server
-    const PORT = process.env.PORT || 3000;
-    app.listen(PORT, () => console.log(`Server is running on port ${PORT}`));
-  })
-  .catch((err) => console.error('Could not connect to MongoDB:', err));
+// Fallback route for undefined endpoints
+app.use((req, res) => {
+  res.status(404).json({ message: 'Route not found' });
+});
 
+// Start the server
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`Server is running on http://0.0.0.0:${PORT}`);
+  console.log(`Accessible on your network at http://10.0.0.61:${PORT}`);
+});
