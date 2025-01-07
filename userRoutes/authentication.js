@@ -6,6 +6,18 @@ const authenticateMiddleware = require('../middleware/authenticateMiddleware')
 
 const router = express.Router();
 
+const nodemailer = require('nodemailer');
+
+//using gmail as transporter
+const mailer = nodemailer.createTransport({
+  service: 'gmail',
+  auth: {
+    user: process.env.EMAIL,       
+    pass: process.env.EMAIL_PASS
+  },
+  secure: false,
+});
+
 // Register for stuff
 router.post('/register', async (req, res) => {
   const { email, password, name} = req.body;
@@ -23,6 +35,25 @@ router.post('/register', async (req, res) => {
     user = new User({ email, password: hashedPassword, name });
     await user.save();
 
+     // Send email
+     const mailIt = {
+      from: process.env.EMAIL,
+      to: email,
+      subject: 'Success',
+      text: `Hello ${name},\n\nThank you for registering for HTC.\n\nRegards,\nThe HTC Team`,
+    };
+
+    console.log('EMAIL:', process.env.EMAIL);
+    console.log('EMAIL_PASS:', process.env.EMAIL_PASS);
+
+    mailer.sendMail(mailIt, (error, info) => {
+      if (error) {
+        console.error('Error sending email:', error);
+      } else {
+        console.log('Email sent:', info.response);
+      }
+    });
+
     res.status(201).json({ message: 'User created successfully' });
   } catch (error) {
     res.status(500).json({ message: 'Server error' });
@@ -35,7 +66,7 @@ router.post('/login', async (req, res) => {
 
   try {
     //Seeing if user exists
-    const user = await User.findOne({ email });
+    const user = await User.findOne({ email }); 
     if (!user) return res.status(400).json({ message: 'Invalid credentials' });
 
     //Checking the password stuff
