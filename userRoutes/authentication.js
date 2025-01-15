@@ -170,7 +170,6 @@ router.post('/reset-password', async (req, res) => {
       return res.status(400).json({ message: 'Token has expired' });
     }
 
-    // Compare provided token with stored hashed token
     const isTokenValid = await bcrypt.compare(token, user.newPasswordToken);
     if (!isTokenValid) {
       return res.status(400).json({ message: 'Invalid token' });
