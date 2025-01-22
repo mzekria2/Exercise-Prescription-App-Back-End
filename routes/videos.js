@@ -10,20 +10,21 @@ const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     const uploadPath = 'uploads/';
 
-    // Check if the folder exists
     if (!fs.existsSync(uploadPath)) {
-      // If it doesn't exist, create it
-      fs.mkdirSync(uploadPath, { recursive: true }); // 'recursive' ensures nested folders are created if needed
+      fs.mkdirSync(uploadPath, { recursive: true });
     }
 
-    // Set the folder path
     cb(null, uploadPath);
   },
   filename: (req, file, cb) => {
     cb(null, Date.now() + path.extname(file.originalname));
   },
 });
-const upload = multer({ storage });
+
+const upload = multer({
+  storage,
+  limits: { fileSize: 50 * 1024 * 1024 }, // Limit file size to 50 MB
+});
 
 // Route for uploading videos
 router.post('/upload', upload.single('video'), async (req, res) => {
@@ -44,7 +45,7 @@ router.post('/upload', upload.single('video'), async (req, res) => {
     const savedVideo = await video.save();
     res.status(201).json({
       message: 'Video uploaded successfully!',
-      video: savedVideo, // This includes the `_id` field
+      video: savedVideo,
     });
   } catch (err) {
     res.status(500).json({ message: 'Error saving video', error: err.message });

@@ -9,7 +9,6 @@ const authMiddleware = require('./middleware/authenticateMiddleware');
 const videoRoutes = require('./routes/videos');
 const authRoutes = require('./userRoutes/authentication');
 
-
 // Load environment variables
 dotenv.config();
 
@@ -18,8 +17,8 @@ const PORT = process.env.PORT || 3000;
 const mongoURI = process.env.MONGODB_URI;
 
 // Middleware
-app.use(cors({ origin: '*' }));
-app.use(express.json());
+app.use(cors({ origin: '*' })); // Allow all origins
+app.use(express.json()); // Parse incoming JSON
 
 // MongoDB connection
 if (!mongoURI) {
@@ -39,7 +38,6 @@ mongoose
     console.error('Could not connect to MongoDB:', err.message);
     process.exit(1);
   });
-
 
 // Root endpoint
 app.get('/', (req, res) => {
@@ -66,5 +64,5 @@ app.use((req, res) => {
 // Start the server
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`Server is running on http://0.0.0.0:${PORT}`);
-  console.log(`Accessible on your network at http://10.0.0.61:${PORT}`);
+  console.log(`Ensure you are using the ngrok URL for external access.`);
 });
