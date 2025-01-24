@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const Video = require("../models/video_model");
+const Video = require("../models/videoModel");
 const multer = require("multer");
 const path = require("path");
 const fs = require("fs");
@@ -54,6 +54,7 @@ router.post("/upload", upload.single("video"), async (req, res) => {
 
 // Route for fetching a specific video by ID
 router.get("/video/:id", async (req, res) => {
+  console.log("Fetching) video");
   try {
     const videoId = req.params.id;
     console.log(`Fetching video with ID: ${videoId}`);
