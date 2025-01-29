@@ -132,7 +132,7 @@ router.post('/forgot-password', async(req, res)=>{
     userFound.newPasswordExpires = Date.now() + TOKEN_TIME*1000;
     await userFound.save();
 
-    const resetLink = `http://localhost:3000/reset-password?token=${newToken}&email=${userFound.email}`;
+    const resetLink = `http://localhost:8081/reset-password?token=${newToken}&email=${userFound.email}`;
 
     const mailer = nodemailer.createTransport({
       service: 'gmail',
@@ -157,7 +157,8 @@ router.post('/forgot-password', async(req, res)=>{
 });
 
 router.post('/reset-password', async (req, res) => {
-  const { token, email, newPassword } = req.body;
+  const { password } = req.body; // Extract the new password from the body
+  const { token, email } = req.query; // Extract token and email from the query parameters
 
   try {
     const user = await User.findOne({ email });
