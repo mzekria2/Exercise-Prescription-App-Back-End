@@ -178,7 +178,7 @@ router.post('/reset-password', async (req, res) => {
 
     // Hash the new password
     const salt = await bcrypt.genSalt(10);
-    user.password = await bcrypt.hash(newPassword, salt);
+    user.password = await bcrypt.hash(password, salt);
 
     // Clear reset token and expiration fields
     user.newPasswordToken = undefined;
