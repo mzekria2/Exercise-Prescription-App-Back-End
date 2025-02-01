@@ -94,7 +94,9 @@ router.get("/allVideos", async (req, res) => {
 });
 
 router.delete("/delete/:id", async (req, res) => {
+  console.log("Deleting video");
   try {
+    console.log("Deleting video");
     const videoId = req.params.id;
     const video = await Video.findByIdAndDelete(videoId);
 
