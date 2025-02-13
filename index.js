@@ -4,11 +4,9 @@
 // const path = require('path');
 // const fs = require('fs');
 // require('dotenv').config();
-// const cors = require('cors'); 
+// const cors = require('cors');
 
 // const videoRoutes = require('./routes/videos');
-
-
 
 // // Initialize express app
 // const app = express();
@@ -20,10 +18,6 @@
 // mongoose.connect(mongoURI)
 //   .then(() => console.log('MongoDB connected'))
 //   .catch((err) => console.log('MongoDB connection error:', err.message));
-
-
-
-
 
 // app.use('/videos', videoRoutes);
 
