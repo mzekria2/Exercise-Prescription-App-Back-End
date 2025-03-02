@@ -4,27 +4,28 @@ const Video = require("../models/videoModel");
 const multer = require("multer");
 const path = require("path");
 const fs = require("fs");
+const OpenAI = require("openai");
+const ffmpeg = require("fluent-ffmpeg");
+
+// OpenAI API Setup
+const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
 // Set up Multer for video uploads
 const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    const uploadPath = "uploads/";
-
-    if (!fs.existsSync(uploadPath)) {
-      fs.mkdirSync(uploadPath, { recursive: true });
-    }
-
-    cb(null, uploadPath);
-  },
-  filename: (req, file, cb) => {
-    cb(null, Date.now() + path.extname(file.originalname));
-  },
+  destination: "uploads/videos/",
+  filename: (req, file, cb) => cb(null, Date.now() + path.extname(file.originalname)),
 });
 
 const upload = multer({
   storage,
   limits: { fileSize: 50 * 1024 * 1024 }, // Limit file size to 50 MB
 });
+
+// Function to Convert Subtitles to `.vtt`
+const convertToVTT = (text, outputPath) => {
+  const vttContent = "WEBVTT\n\n" + text;
+  fs.writeFileSync(outputPath, vttContent);
+};
 
 // Route for uploading videos
 router.post("/upload", upload.single("video"), async (req, res) => {
@@ -43,12 +44,27 @@ router.post("/upload", upload.single("video"), async (req, res) => {
     });
 
     const savedVideo = await video.save();
+    // Transcribe Video using Whisper API
+    const transcription = await openai.audio.transcriptions.create({
+      file: fs.createReadStream(req.file.path),
+      model: "whisper-1",
+      response_format: "text",
+    });
+
+    // Convert transcription to VTT format
+    const subtitlePath = `uploads/subtitles/${savedVideo._id}.vtt`;
+    convertToVTT(transcription.text, subtitlePath);
+
+    // Update Video Model with Subtitle Path
+    savedVideo.subtitles = subtitlePath;
+    await savedVideo.save();
+
     res.status(201).json({
-      message: "Video uploaded successfully!",
+      message: "Video uploaded successfully with subtitles!",
       video: savedVideo,
     });
   } catch (err) {
-    res.status(500).json({ message: "Error saving video", error: err.message });
+    res.status(500).json({ message: "Error processing video", error: err.message });
   }
 });
 
@@ -65,19 +81,11 @@ router.get("/video/:id", async (req, res) => {
       return res.status(404).json({ message: "Video not found" });
     }
 
-    const videoPath = path.resolve(video.path);
-    console.log(`Video path resolved to: ${videoPath}`);
-
-    if (!fs.existsSync(videoPath)) {
-      console.error("Video file not found on server:", videoPath);
-      return res
-        .status(404)
-        .json({ message: "Video file not found on server" });
-    }
-
-    res.sendFile(videoPath); // Serve the video file
+    res.json({
+      videoPath: `http://localhost:3000/${video.path}`,
+      subtitlePath: video.subtitles ? `http://localhost:3000/${video.subtitles}` : null,
+    });
   } catch (error) {
-    console.error("Error fetching video:", error);
     res.status(500).json({ message: "Internal Server Error" });
   }
 });

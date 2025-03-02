@@ -30,6 +30,9 @@ const videoSchema = new mongoose.Schema({
     type: Date,
     default: Date.now, // Automatically set to the current date
   },
+  subtitles: {
+    type: String, default: null
+   },
   tags: {
     type: [String], // Array of tags for categorizing videos
     default: [],
