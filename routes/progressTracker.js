@@ -1,9 +1,10 @@
 const express = require("express");
 const router = express.Router();
-const ProgressModel = require("../models/ProgressTrackerModel"); // Adjust path as needed
-
+// const ProgressModel = require("../models/ProgressTrackerModel"); // Adjust path as needed
+const authMiddleware = require("../middleware/authenticateMiddleware");
+const userVidModel = require("../models/userVideo");
 //route to mark a video as completed
-router.post("/markCompletedVideo", async (req, res) => {
+router.post("/markCompletedVideo", authMiddleware, async (req, res) => {
   try {
     const { videoId, videoTitle } = req.body; // Get video details from request
 
@@ -12,15 +13,15 @@ router.post("/markCompletedVideo", async (req, res) => {
         .status(400)
         .json({ message: "videoId and videoTitle are required" });
     }
-
+    const userId = req.user.userId;
     // Find existing progress record for this video
-    let progressInfo = await ProgressModel.findOne({ videoId });
+    let progressInfo = await userVidModel.findOne({ userId, videoId });
 
     if (!progressInfo) {
       // If no progress exists for this video, create a new entry
-      progressInfo = new ProgressModel({
+      progressInfo = new userVidModel({
+        userId,
         videoId,
-        videoTitle,
         dateCompleted: [new Date()], // Start with the current date
       });
 
@@ -40,29 +41,14 @@ router.post("/markCompletedVideo", async (req, res) => {
 });
 
 //route to get progress data
-router.get("/progressData", async (req, res) => {
+router.get("/progressData", authMiddleware, async (req, res) => {
   try {
     // Find existing progress record for this video
-    let progressInfo = await ProgressModel.find();
+    let progressInfo = await userVidModel.find({
+      userId: req.user.userId,
+    });
 
-    if (!progressInfo) {
-      // If no progress exists for this video, create a new entry
-      progressInfo = new ProgressModel({
-        videoId,
-        videoTitle,
-        dateCompleted: [new Date()], // Start with the current date
-      });
-
-      await progressInfo.save();
-    } else {
-      // If progress exists, add a new completion date
-      progressInfo.dateCompleted.push(new Date());
-      await progressInfo.save();
-    }
-
-    res
-      .status(200)
-      .json({ message: "Video marked as completed", progress: progressInfo });
+    res.status(200).json(progressInfo);
   } catch (err) {
     res.status(500).json({ message: "Error saving video", error: err.message });
   }

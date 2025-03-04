@@ -4,6 +4,7 @@ const dotenv = require("dotenv");
 const cors = require("cors");
 const path = require("path");
 const fs = require("fs");
+const cookieParser = require("cookie-parser");
 
 const authMiddleware = require("./middleware/authenticateMiddleware");
 const videoRoutes = require("./routes/videos");
@@ -18,7 +19,8 @@ const PORT = process.env.PORT || 3000;
 const mongoURI = process.env.MONGODB_URI;
 
 // Middleware
-app.use(cors({ origin: "*" })); // Allow all origins
+app.use(cors({ origin: "http://localhost:8081", credentials: true })); // // change in production
+app.use(cookieParser());
 app.use(express.json()); // Parse incoming JSON
 
 // MongoDB connection
@@ -47,13 +49,13 @@ app.get("/", (req, res) => {
   res.send("Server is running!");
 });
 
-// Protected route example
-app.get("/api/protected", authMiddleware, (req, res) => {
-  res.json({
-    message: "This is a protected route.",
-    user: req.user, // This will contain the user information from the token
-  });
-});
+// // Protected route example
+// app.get("/api/protected", authMiddleware, (req, res) => {
+//   res.json({
+//     message: "This is a protected route.",
+//     user: req.user, // This will contain the user information from the token
+//   });
+// });
 
 // Use routes
 app.use("/api/auth", authRoutes);
