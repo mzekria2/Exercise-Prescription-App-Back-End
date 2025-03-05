@@ -22,6 +22,7 @@ router.post("/markCompletedVideo", authMiddleware, async (req, res) => {
       progressInfo = new userVidModel({
         userId,
         videoId,
+        videoTitle,
         dateCompleted: [new Date()], // Start with the current date
       });
 
