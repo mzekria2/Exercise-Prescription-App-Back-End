@@ -125,16 +125,18 @@ router.get("/allVideos", authMiddleware, async (req, res) => {
 router.delete("/delete/:id", authMiddleware, async (req, res) => {
   try {
     const videoId = req.params.id;
+    const userId = req.user.userId;
 
     // Find the video by ID
     const video = await Video.findById(videoId);
+    const videoUser = await userVidModel.findOne({ videoId: videoId });
 
     if (!video) {
       return res.status(404).json({ message: "Video not found" });
     }
 
     // Check if the logged-in user owns the video
-    if (video.userId.toString() !== req.user.id) {
+    if (videoUser.userId.toString() !== userId) {
       return res
         .status(403)
         .json({ message: "You are not authorized to delete this video" });
