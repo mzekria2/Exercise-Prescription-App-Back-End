@@ -1,72 +1,79 @@
+require("dotenv").config(); // Load environment variables first
+
 const express = require("express");
 const mongoose = require("mongoose");
-const dotenv = require("dotenv");
 const cors = require("cors");
-const path = require("path");
-const fs = require("fs");
 
 const authMiddleware = require("./middleware/authenticateMiddleware");
 const videoRoutes = require("./routes/videos");
 const authRoutes = require("./userRoutes/authentication");
 const progressTrackerRoutes = require("./routes/progressTracker");
-
-// Load environment variables
-dotenv.config();
-
+const translationService = require("./routes/translationService");
+const captionServices = require("./routes/captionService"); 
 const app = express();
 const PORT = process.env.PORT || 3000;
 const mongoURI = process.env.MONGODB_URI;
 
-// Middleware
-app.use(cors({ origin: "*" })); // Allow all origins
-app.use(express.json()); // Parse incoming JSON
-
-// MongoDB connection
 if (!mongoURI) {
-  console.error(
-    "Error: MONGODB_URI is not defined in the environment variables."
-  );
+  console.error("Error: MONGODB_URI is missing in environment variables.");
   process.exit(1);
 }
 
+// Middleware
+app.use(cors({
+  origin: (origin, callback) => {
+    console.log("Incoming origin:", origin);
+    if (!origin) {
+      // Allow requests with no origin (e.g. non-browser clients)
+      return callback(null, true);
+    }
+    // If the origin includes "localhost" or "ngrok-free.app", allow it
+    if (origin.includes("localhost") || origin.includes("ngrok-free.app")) {
+      return callback(null, origin);
+    }
+    // Otherwise, block
+    return callback(new Error("Not allowed by CORS"));
+  },
+  credentials: true
+}));
+
+app.use(express.json());
+
+// MongoDB Connection
 mongoose
-  .connect(mongoURI, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
-  })
-  .then(() => {
-    console.log("Connected to MongoDB");
-  })
+  .connect(mongoURI)
+  .then(() => console.log("Connected to MongoDB"))
   .catch((err) => {
-    console.error("Could not connect to MongoDB:", err.message);
+    console.error("MongoDB Connection Error:", err.message);
     process.exit(1);
   });
 
-// Root endpoint
+// Root Endpoint
 app.get("/", (req, res) => {
   res.send("Server is running!");
 });
 
-// Protected route example
+// Protected Route Example
 app.get("/api/protected", authMiddleware, (req, res) => {
   res.json({
     message: "This is a protected route.",
-    user: req.user, // This will contain the user information from the token
+    user: req.user,
   });
 });
 
-// Use routes
+// API Routes
 app.use("/api/auth", authRoutes);
 app.use("/videos", videoRoutes);
 app.use("/progress", progressTrackerRoutes);
+app.use("/api/translation", translationService);
+app.use("/api/captions", captionServices); 
 
-// Fallback route for undefined endpoints
+// Handle Undefined Routes
 app.use((req, res) => {
   res.status(404).json({ message: "Route not found" });
 });
 
-// Start the server
+// Start Server
 app.listen(PORT, "0.0.0.0", () => {
-  console.log(`Server is running on http://0.0.0.0:${PORT}`);
-  console.log(`Ensure you are using the ngrok URL for external access.`);
+  console.log(`Server running on http://0.0.0.0:${PORT}`);
 });
