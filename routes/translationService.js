@@ -4,8 +4,9 @@ const router = express.Router();
 
 // Initialize Google Translate API
 const translate = new Translate({
-  key: "AIzaSyBVNe1Zp9243BXZLe6Q0Kz6oVBKjfI1u84", // Replace with your actual API key
-});
+    key: process.env.GOOGLE_TRANSLATE_API_KEY,
+  });
+  
 
 router.post("/translate", async (req, res) => {
   try {

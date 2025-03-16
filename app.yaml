@@ -1,0 +1,10 @@
+runtime: nodejs18
+service: backend
+env_variables:
+  GOOGLE_APPLICATION_CREDENTIALS: "/config/capstone-449213-key.json"
+  MONGODB_URI: "mongodb+srv://YOUR_USERNAME:YOUR_PASSWORD@capstone.mongodb.net/?retryWrites=true&w=majority"
+  JWT_SECRET: "your-secret-key"
+
+handlers:
+  - url: /.*
+    script: auto

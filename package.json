@@ -17,6 +17,10 @@
   "homepage": "https://github.com/mzekria2/Exercise-Prescription-App-Back-End#readme",
   "description": "",
   "dependencies": {
+    "@google-cloud/secret-manager": "^5.6.0",
+    "@google-cloud/speech": "^6.7.1",
+    "@google-cloud/storage": "^7.15.2",
+    "@google-cloud/translate": "^8.5.1",
     "axios": "^1.7.9",
     "bcryptjs": "^2.4.3",
     "cors": "^2.8.5",
