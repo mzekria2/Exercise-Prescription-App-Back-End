@@ -4,6 +4,8 @@ const Video = require("../models/videoModel");
 const multer = require("multer");
 const path = require("path");
 const fs = require("fs");
+const authMiddleware = require("../middleware/authenticateMiddleware");
+const userVidModel = require("../models/userVideo");
 
 // Set up Multer for video uploads
 const storage = multer.diskStorage({
@@ -23,34 +25,52 @@ const storage = multer.diskStorage({
 
 const upload = multer({
   storage,
-  limits: { fileSize: 50 * 1024 * 1024 }, // Limit file size to 50 MB
+  limits: { fileSize: 300 * 1024 * 1024 }, // Limit file size to 300 MB
 });
 
 // Route for uploading videos
-router.post("/upload", upload.single("video"), async (req, res) => {
-  if (!req.file) {
-    return res.status(400).json({ message: "No file uploaded." });
-  }
+router.post(
+  "/upload",
+  authMiddleware,
+  upload.single("video"),
+  async (req, res) => {
+    if (!req.file) {
+      return res.status(400).json({ message: "No file uploaded." });
+    }
 
-  try {
-    const video = new Video({
-      title: req.body.title || "Untitled Video",
-      description: req.body.description || "",
-      filename: req.file.filename,
-      path: req.file.path,
-      size: req.file.size,
-      format: req.file.mimetype.split("/")[1],
-    });
+    try {
+      const video = new Video({
+        title: req.body.title || "Untitled Video",
+        description: req.body.description || "",
+        filename: req.file.filename,
+        path: req.file.path,
+        size: req.file.size,
+        format: req.file.mimetype.split("/")[1],
+      });
 
-    const savedVideo = await video.save();
-    res.status(201).json({
-      message: "Video uploaded successfully!",
-      video: savedVideo,
-    });
-  } catch (err) {
-    res.status(500).json({ message: "Error saving video", error: err.message });
+      const savedVideo = await video.save();
+
+      console.log("Saved video:", savedVideo);
+      // Save video metadata to the user's video collection
+      const userVideo = new userVidModel({
+        userId: req.user.userId,
+        videoId: savedVideo._id,
+        dateCompleted: [],
+      });
+
+      await userVideo.save();
+
+      res.status(201).json({
+        message: "Video uploaded successfully!",
+        video: savedVideo,
+      });
+    } catch (err) {
+      res
+        .status(500)
+        .json({ message: "Error saving video", error: err.message });
+    }
   }
-});
+);
 
 // Route for fetching a specific video by ID
 router.get("/video/:id", async (req, res) => {
@@ -83,9 +103,18 @@ router.get("/video/:id", async (req, res) => {
 });
 
 // New route for fetching all video metadata
-router.get("/allVideos", async (req, res) => {
+router.get("/allVideos", authMiddleware, async (req, res) => {
   try {
-    const videos = await Video.find(); // Fetch all video documents from the database
+    const userVideos = await userVidModel.find({ userId: req.user.userId });
+    console.log("User videos:", userVideos);
+
+    //Extract videoIds from the userVideos
+    const videoIds = userVideos.map((userVideo) => userVideo.videoId);
+    console.log("Video IDs:", videoIds);
+
+    //Query the Video collection for the videos with those videoIds
+    const videos = await Video.find({ _id: { $in: videoIds } });
+
     res.status(200).json(videos);
   } catch (error) {
     console.error("Error fetching videos:", error);
@@ -93,18 +122,30 @@ router.get("/allVideos", async (req, res) => {
   }
 });
 
-router.delete("/delete/:id", async (req, res) => {
-  console.log("Deleting video");
+router.delete("/delete/:id", authMiddleware, async (req, res) => {
   try {
-    console.log("Deleting video");
     const videoId = req.params.id;
-    const video = await Video.findByIdAndDelete(videoId);
+    const userId = req.user.userId;
+
+    // Find the video by ID
+    const video = await Video.findById(videoId);
+    const videoUser = await userVidModel.findOne({ videoId: videoId });
 
     if (!video) {
       return res.status(404).json({ message: "Video not found" });
     }
 
-    // Delete the video file from the server
+    // Check if the logged-in user owns the video
+    if (videoUser.userId.toString() !== userId) {
+      return res
+        .status(403)
+        .json({ message: "You are not authorized to delete this video" });
+    }
+
+    // Delete the video from the database
+    await Video.findByIdAndDelete(videoId);
+
+    // Delete the actual video file from the server
     const videoPath = path.resolve(video.path);
     if (fs.existsSync(videoPath)) {
       fs.unlinkSync(videoPath);
