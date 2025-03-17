@@ -3,16 +3,13 @@ require("dotenv").config(); // Load environment variables first
 const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
-<<<<<<< HEAD
 const { SecretManagerServiceClient } = require("@google-cloud/secret-manager");
 
 // Secret Manager Client
 const secretManager = new SecretManagerServiceClient();
-=======
 const path = require("path");
 const fs = require("fs");
 const cookieParser = require("cookie-parser");
->>>>>>> d45738369aed7d36be3879095fc689e378f653cf
 
 const authMiddleware = require("./middleware/authenticateMiddleware");
 const videoRoutes = require("./routes/videos");
@@ -25,15 +22,12 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 const mongoURI = process.env.MONGODB_URI;
 
-<<<<<<< HEAD
-=======
 // Middleware
 app.use(cors({ origin: "http://localhost:8081", credentials: true })); // // change in production
 app.use(cookieParser());
 app.use(express.json()); // Parse incoming JSON
 
 // MongoDB connection
->>>>>>> d45738369aed7d36be3879095fc689e378f653cf
 if (!mongoURI) {
   console.error("Error: MONGODB_URI is missing in environment variables.");
   process.exit(1);
@@ -92,7 +86,6 @@ app.get("/healthz", (req, res) => {
   res.status(200).send("OK");
 });
 
-<<<<<<< HEAD
 // ✅ Root Endpoint
 app.get("/", (req, res) => res.send("Server is running!"));
 
@@ -100,15 +93,6 @@ app.get("/", (req, res) => res.send("Server is running!"));
 app.get("/api/protected", authMiddleware, (req, res) => {
   res.json({ message: "This is a protected route.", user: req.user });
 });
-=======
-// // Protected route example
-// app.get("/api/protected", authMiddleware, (req, res) => {
-//   res.json({
-//     message: "This is a protected route.",
-//     user: req.user, // This will contain the user information from the token
-//   });
-// });
->>>>>>> d45738369aed7d36be3879095fc689e378f653cf
 
 // ✅ API Routes
 app.use("/api/auth", authRoutes);
