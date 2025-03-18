@@ -27,16 +27,42 @@ async function getGoogleCredentials() {
     });
     return JSON.parse(version.payload.data.toString());
   } catch (error) {
-    console.error("Error retrieving credentials from Secret Manager:", error);
+    console.error("❌ Error retrieving credentials from Secret Manager:", error);
     process.exit(1);
   }
 }
 
-// 🔹 Secure CORS Configuration (Allow Frontend Origin)
-app.use(cors({
-  origin: "http://localhost:3000",
-  credentials: true,
-}));
+// 🔹 CORS Configuration (Allow Multiple Frontend Origins)
+const allowedOrigins = ["http://localhost:3000", "http://localhost:8081"]; // Add more if needed
+
+app.use(
+  cors({
+    origin: function (origin, callback) {
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
+    credentials: true,
+    methods: "GET, POST, PUT, DELETE, OPTIONS",
+    allowedHeaders: "Origin, X-Requested-With, Content-Type, Accept, Authorization",
+  })
+);
+
+// 🔹 Global Middleware to Set CORS Headers (Fixes Preflight Issues)
+app.use((req, res, next) => {
+  res.header("Access-Control-Allow-Origin", req.headers.origin || "*");
+  res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+  res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Authorization");
+  res.header("Access-Control-Allow-Credentials", "true");
+
+  if (req.method === "OPTIONS") {
+    return res.status(200).end();
+  }
+  
+  next();
+});
 
 app.use(cookieParser());
 app.use(express.json());
@@ -49,10 +75,11 @@ const disableCache = (req, res, next) => {
 
 // 🔹 Retry MongoDB Connection if it Fails
 const connectWithRetry = () => {
-  mongoose.connect(mongoURI, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
-  })
+  mongoose
+    .connect(mongoURI, {
+      useNewUrlParser: true,
+      useUnifiedTopology: true,
+    })
     .then(() => console.log("✅ Connected to MongoDB"))
     .catch((err) => {
       console.error("❌ MongoDB Connection Error:", err.message);
