@@ -1,22 +1,18 @@
-const mongoose = require('mongoose');
+// schedule.js
+const mongoose = require("mongoose");
 
+// Schema for individual notifications
 const NotificationSchema = new mongoose.Schema({
-  daysOfWeek: [{ type: String, required: true }], // Days of the week, e.g., ["Monday", "Wednesday"]
-  time: { type: String, required: true }, // Time in HH:MM format
-  message: { type: String, required: true }, // Notification message
+  dayOfWeek: { type: Number, required: true }, // e.g., Monday=1, Tuesday=2
+  times: [String],      // single time string, e.g. "10:00"
+  messages: [String]   // single message
 });
 
+// Schema for user schedules
 const ScheduleSchema = new mongoose.Schema({
   userId: { type: String, required: true },
-  fcmTokens: [{ type: String, required: true }], // Array of tokens
-  notifications: [
-    {
-      daysOfWeek: [{ type: String, required: true }],
-      time: { type: String, required: true },
-      message: { type: String, required: true },
-    },
-  ],
+  expoPushTokens: [{ type: String, required: true }],
+  notifications: [NotificationSchema],
 });
 
-
-module.exports = mongoose.model('Schedule', ScheduleSchema);
+module.exports = mongoose.model("Schedule", ScheduleSchema);

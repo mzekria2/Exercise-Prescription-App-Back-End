@@ -1,12 +1,12 @@
-const express = require('express');
-const mongoose = require('mongoose');
-const cors = require('cors');
+const express = require("express");
+const mongoose = require("mongoose");
+const cors = require("cors");
+require("dotenv").config();
 
-require('dotenv').config();
-const videoRoutes = require('./routes/videos');
+// Import routes
+const videoRoutes = require("./routes/videos");
+const scheduleRoutes = require("./routes/schedule-routes"); // Schedule routes
 
-
-const scheduleRoutes = require('./routes/schedule-routes'); // Schedule routes
 // Initialize express app
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -15,21 +15,21 @@ const PORT = process.env.PORT || 3000;
 app.use(cors());
 app.use(express.json());
 
-app.use('/api/schedule', scheduleRoutes);
+// Routes
+app.use("/api/schedule", scheduleRoutes);
+app.use("/videos", videoRoutes);
 
 // MongoDB connection
-const mongoURI = `mongodb+srv://${process.env.MONGODB_USER}:${process.env.MONGODB_PASS}@${process.env.MONGODB_URL}/`
+const mongoURI = `mongodb+srv://${process.env.MONGODB_USER}:${process.env.MONGODB_PASS}@${process.env.MONGODB_URL}/`;
 
-mongoose.connect(mongoURI, { useNewUrlParser: true, useUnifiedTopology: true })
-  .then(() => console.log('MongoDB connected'))
-  .catch((err) => console.log('MongoDB connection error: ', err));
-
-
-
-
-app.use('/videos', videoRoutes);
+mongoose
+  .connect(mongoURI, { useNewUrlParser: true, useUnifiedTopology: true })
+  .then(() => console.log("MongoDB connected"))
+  .catch((err) => console.error("MongoDB connection error: ", err));
 
 // Start the server
-app.listen(PORT, () => {
-  console.log(`Server is running on http://localhost:${PORT}`);
+app.listen(PORT, "0.0.0.0", () => {
+  console.log(`Server is running on http://0.0.0.0:${PORT}`);
 });
+
+module.exports = app; // Export for testing or external use
