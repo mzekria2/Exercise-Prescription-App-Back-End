@@ -134,51 +134,98 @@ router.post("/register-token", async (req, res) => {
 //     return res.status(500).json({ error: "Failed to schedule notifications." });
 //   }
 // });
+
+// GOOD SCHDEULE 
+// router.post("/schedule", async (req, res) => {
+//   // Option 2: We rely on the push token provided in the request body.
+//   const { userId, pushToken, notifications } = req.body;
+
+//   if (!userId || !pushToken || !notifications) {
+//     return res.status(400).json({ error: "userId, pushToken, and notifications are required." });
+//   }
+
+//   if (!Expo.isExpoPushToken(pushToken)) {
+//     return res.status(400).json({ error: "Invalid Expo Push Token." });
+//   }
+
+//   try {
+//     // 1. Schedule notifications with Agenda
+//     notifications.forEach(notification => {
+//       const { dayOfWeek, times, messages } = notification;
+//       if (!dayOfWeek || !times || !messages || times.length !== messages.length) {
+//         console.error("Invalid notification format:", notification);
+//         return; // or handle error differently if you want strict validation
+//       }
+
+//       times.forEach((time, i) => {
+//         const msg = messages[i];
+//         const time24 = convertTimeTo24Hour(time);
+//         const [hour, minute] = time24.split(":");
+//         console.log(`Pairing for dayOfWeek ${dayOfWeek}: time="${time}" (converted to ${time24}) -> message="${msg}"`);
+//         const cronExpression = `${minute} ${hour} * * ${dayOfWeek}`;
+//         console.log(`Cron Expression: ${cronExpression} for job: send-notification-${userId}-${dayOfWeek}-${time}-${i}`);
+//         //const jobName = `send-notification-${userId}-${dayOfWeek}-${time}-${i}`;
+//         const jobName = `send-notification-${userId}-${dayOfWeek}-${time24}`;
+
+//         // Schedule the notification job in Agenda, using the pushToken from the request body.
+//         agenda.every(
+//           cronExpression,
+//           "send notification",
+//           { pushToken, title: "Scheduled Notification", body: msg, userId },
+//           { jobId: jobName }
+//         ).catch((err) => console.error("Failed to schedule notification:", err));
+//       });
+//     });
+//  // 3. Send an immediate success response
+//     return res.status(200).json({ message: "Notifications scheduled and stored successfully." });
+
+//   } catch (error) {
+//     console.error("Error scheduling notifications:", error);
+//     return res.status(500).json({ error: "Failed to schedule notifications." });
+//   }
+// });
+
+
 router.post("/schedule", async (req, res) => {
-  // Option 2: We rely on the push token provided in the request body.
   const { userId, pushToken, notifications } = req.body;
 
-  if (!userId || !pushToken || !notifications) {
-    return res.status(400).json({ error: "userId, pushToken, and notifications are required." });
-  }
-
-  if (!Expo.isExpoPushToken(pushToken)) {
-    return res.status(400).json({ error: "Invalid Expo Push Token." });
+  if (!userId || !pushToken || !notifications || !Expo.isExpoPushToken(pushToken)) {
+    return res.status(400).json({ error: "Invalid input or Expo Push Token." });
   }
 
   try {
-    // 1. Schedule notifications with Agenda
     notifications.forEach(notification => {
       const { dayOfWeek, times, messages } = notification;
-      if (!dayOfWeek || !times || !messages || times.length !== messages.length) {
-        console.error("Invalid notification format:", notification);
-        return; // or handle error differently if you want strict validation
-      }
 
       times.forEach((time, i) => {
-        const msg = messages[i];
         const time24 = convertTimeTo24Hour(time);
         const [hour, minute] = time24.split(":");
-        console.log(`Pairing for dayOfWeek ${dayOfWeek}: time="${time}" (converted to ${time24}) -> message="${msg}"`);
         const cronExpression = `${minute} ${hour} * * ${dayOfWeek}`;
-        console.log(`Cron Expression: ${cronExpression} for job: send-notification-${userId}-${dayOfWeek}-${time}-${i}`);
-        const jobName = `send-notification-${userId}-${dayOfWeek}-${time}-${i}`;
+        const jobName = `send-notification-${userId}-${dayOfWeek}-${time24}`;
 
-        // Schedule the notification job in Agenda, using the pushToken from the request body.
         agenda.every(
           cronExpression,
           "send notification",
-          { pushToken, title: "Scheduled Notification", body: msg, userId },
+          { pushToken, title: "Scheduled Notification", body: messages[i], userId },
           { jobId: jobName }
-        ).catch((err) => console.error("Failed to schedule notification:", err));
+        ).catch(err => console.error("Failed to schedule notification:", err));
       });
     });
- // 3. Send an immediate success response
-    return res.status(200).json({ message: "Notifications scheduled and stored successfully." });
+
+    await Schedule.findOneAndUpdate(
+      { userId },
+      {
+        $addToSet: { expoPushTokens: pushToken },
+        $push: { notifications: { $each: notifications } },
+      },
+      { upsert: true, new: true }
+    );
+
+    res.status(200).json({ message: "Notifications scheduled and stored successfully." });
 
   } catch (error) {
     console.error("Error scheduling notifications:", error);
-    return res.status(500).json({ error: "Failed to schedule notifications." });
+    res.status(500).json({ error: "Failed to schedule notifications." });
   }
 });
 
@@ -210,9 +257,10 @@ router.delete("/delete/:userId/:dayOfWeek/:time/:index", async (req, res) => {
     const dayNumber = parseInt(dayOfWeek, 10);
     const notifIndex = parseInt(index, 10);
     console.log(`Deleting notification for user ${userId}, day ${dayNumber}, time "${decodedTime}", index ${notifIndex}`);
-    
+    const time24 = convertTimeTo24Hour(decodedTime);
     // Construct the Agenda job name exactly as in scheduling
-    const jobName = `send-notification-${userId}-${dayOfWeek}-${decodedTime}-${index}`;
+    //const jobName = `send-notification-${userId}-${dayOfWeek}-${decodedTime}-${index}`;
+    const jobName = `send-notification-${userId}-${dayOfWeek}-${time24}`;
     console.log(`Constructed job name: ${jobName}`);
     
     // Cancel the corresponding Agenda job
