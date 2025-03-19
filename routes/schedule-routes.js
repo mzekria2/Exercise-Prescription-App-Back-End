@@ -67,48 +67,6 @@ router.post("/register-token", async (req, res) => {
 
 // -----------------------------------------------------------------------------
 // Schedule Notifications
-// This route now accepts a notifications array from the frontend.
-// Each notification object should have: dayOfWeek, times (array), messages (array)
-// -----------------------------------------------------------------------------
-// router.post("/schedule", async (req, res) => {
-//   const { userId, pushToken, notifications } = req.body;
-
-//   if (!userId || !pushToken || !notifications) {
-//     return res.status(400).json({ error: "userId, pushToken, and notifications are required." });
-//   }
-
-//   if (!Expo.isExpoPushToken(pushToken)) {
-//     return res.status(400).json({ error: "Invalid Expo Push Token." });
-//   }
-
-//   notifications.forEach(notification => {
-//     const { dayOfWeek, times, messages } = notification;
-//     if (!dayOfWeek || !times || !messages || times.length !== messages.length) {
-//       console.error("Invalid notification format:", notification);
-//       return; // or handle error as needed
-//     }
-
-//     times.forEach((time, i) => {
-//       const msg = messages[i];
-//       const [hour, minute] = time.split(":");
-//       const cronExpression = `${minute} ${hour} * * ${dayOfWeek}`;
-//       const jobName = `send-notification-${userId}-${dayOfWeek}-${time}-${i}`;
-
-//       // Schedule the notification; errors here won't delay the response
-//       agenda.every(
-//         cronExpression,
-//         "send notification",
-//         { pushToken, title: "Scheduled Notification", body: msg, userId },
-//         { jobId: jobName }
-//       ).catch((err) => console.error("Failed to schedule notification:", err));
-//     });
-//   });
-
-//   // Immediately respond to the client
-//   res.status(200).json({ message: "Notifications scheduled successfully." });
-// });
-// -----------------------------------------------------------------------------
-// Schedule Notifications
 // -----------------------------------------------------------------------------
 router.post("/schedule", async (req, res) => {
   const { userId, pushToken, notifications } = req.body;
@@ -177,51 +135,6 @@ router.post("/schedule", async (req, res) => {
   }
 });
 
-//   try {
-//     // Loop through each notification object in the notifications array.
-//     for (const notification of notifications) {
-//       const { dayOfWeek, times, messages } = notification;
-
-//       // Validate that dayOfWeek, times, and messages are provided and arrays match in length.
-//       if (!dayOfWeek || !times || !messages || times.length !== messages.length) {
-//         console.error("Invalid notification format:", notification);
-//         continue; // or return an error if you prefer strict validation
-//       }
-
-//       // Loop through each time/message pair.
-//       for (let i = 0; i < times.length; i++) {
-//         const time = times[i];      // Expecting time in "HH:MM" format
-//         const msg = messages[i];
-//         const title = "Scheduled Notification"; // Default title
-//         const body = msg; // Use the message as the body
-
-//         // Create a unique job name for this notification
-//         const jobName = `send-notification-${userId}-${dayOfWeek}-${time}-${i}`;
-
-//         // Create a cron expression.
-//         // Assuming time is in "HH:MM" 24-hour format.
-//         const [hour, minute] = time.split(":");
-//         // Cron format: "minute hour * * dayOfWeek"
-//         // Note: Cron day-of-week values are 0-7 (0 and 7 represent Sunday).
-//         // Here, dayOfWeek is provided by the frontend (e.g., Monday = 1, Tuesday = 2, etc.).
-//         const cronExpression = `${minute} ${hour} * * ${dayOfWeek}`;
-
-//         // Schedule the notification using Agenda.
-//         await agenda.every(
-//           cronExpression,
-//           "send notification",
-//           { pushToken, title, body, userId },
-//           { jobId: jobName }
-//         );
-//       }
-//     }
-
-//     res.status(200).json({ message: "Notifications scheduled successfully." });
-//   } catch (error) {
-//     console.error("Error scheduling notifications:", error);
-//     res.status(500).json({ error: "Failed to schedule notifications." });
-//   }
-// });
 
 // -----------------------------------------------------------------------------
 // Get User Schedules
