@@ -68,7 +68,74 @@ router.post("/register-token", async (req, res) => {
 // -----------------------------------------------------------------------------
 // Schedule Notifications
 // -----------------------------------------------------------------------------
+// router.post("/schedule", async (req, res) => {
+//   const { userId, pushToken, notifications } = req.body;
+
+//   if (!userId || !pushToken || !notifications) {
+//     return res.status(400).json({ error: "userId, pushToken, and notifications are required." });
+//   }
+
+//   if (!Expo.isExpoPushToken(pushToken)) {
+//     return res.status(400).json({ error: "Invalid Expo Push Token." });
+//   }
+
+//   try {
+//     // 1. Schedule notifications with Agenda
+//     notifications.forEach(notification => {
+//       const { dayOfWeek, times, messages } = notification;
+//       if (!dayOfWeek || !times || !messages || times.length !== messages.length) {
+//         console.error("Invalid notification format:", notification);
+//         return; // or handle error differently if you want strict validation
+//       }
+
+//       times.forEach((time, i) => {
+//         const msg = messages[i];
+//         // Parse hour and minute from the time string
+//         // const [hour, minute] = time.split(":");
+//         const time24 = convertTimeTo24Hour(time);
+//         const [hour, minute] = time24.split(":");
+//         // Construct a cron expression, e.g. "30 10 * * 1" for Monday 10:30
+//         console.log(`Pairing for dayOfWeek ${dayOfWeek}: time="${time}" (converted to ${time24}) -> message="${msg}"`);
+//         const cronExpression = `${minute} ${hour} * * ${dayOfWeek}`;
+//         console.log(`Cron Expression: ${cronExpression} for job: send-notification-${userId}-${dayOfWeek}-${time}-${i}`);
+//         const jobName = `send-notification-${userId}-${dayOfWeek}-${time}-${i}`;
+
+//         // Schedule the notification job in Agenda
+//         agenda.every(
+//           cronExpression,
+//           "send notification",
+//           { pushToken, title: "Scheduled Notification", body: msg, userId },
+//           { jobId: jobName }
+//         ).catch((err) => console.error("Failed to schedule notification:", err));
+//       });
+//     });
+
+//     // 2. Store notifications in MongoDB under this user's schedule document
+//     await Schedule.findOneAndUpdate(
+//       { userId },
+//       {
+//         // Ensure the push token is in expoPushTokens (without duplication)
+//         $addToSet: { expoPushTokens: pushToken },
+//         // Append all incoming notifications to the "notifications" array
+//         $push: {
+//           notifications: {
+//             $each: notifications,
+//           },
+//         },
+//       },
+//       { upsert: true, new: true }
+//     );
+
+//     // 3. Send an immediate success response
+//     return res.status(200).json({ message: "Notifications scheduled and stored successfully." });
+
+//   } catch (error) {
+//     console.error("Error scheduling notifications:", error);
+//     return res.status(500).json({ error: "Failed to schedule notifications." });
+//   }
+// });
 router.post("/schedule", async (req, res) => {
+  // Option 2: We rely on the push token provided in the request body.
   const { userId, pushToken, notifications } = req.body;
 
   if (!userId || !pushToken || !notifications) {
@@ -90,17 +157,14 @@ router.post("/schedule", async (req, res) => {
 
       times.forEach((time, i) => {
         const msg = messages[i];
-        // Parse hour and minute from the time string
-        // const [hour, minute] = time.split(":");
         const time24 = convertTimeTo24Hour(time);
         const [hour, minute] = time24.split(":");
-        // Construct a cron expression, e.g. "30 10 * * 1" for Monday 10:30
         console.log(`Pairing for dayOfWeek ${dayOfWeek}: time="${time}" (converted to ${time24}) -> message="${msg}"`);
         const cronExpression = `${minute} ${hour} * * ${dayOfWeek}`;
         console.log(`Cron Expression: ${cronExpression} for job: send-notification-${userId}-${dayOfWeek}-${time}-${i}`);
         const jobName = `send-notification-${userId}-${dayOfWeek}-${time}-${i}`;
 
-        // Schedule the notification job in Agenda
+        // Schedule the notification job in Agenda, using the pushToken from the request body.
         agenda.every(
           cronExpression,
           "send notification",
@@ -109,24 +173,7 @@ router.post("/schedule", async (req, res) => {
         ).catch((err) => console.error("Failed to schedule notification:", err));
       });
     });
-
-    // 2. Store notifications in MongoDB under this user's schedule document
-    await Schedule.findOneAndUpdate(
-      { userId },
-      {
-        // Ensure the push token is in expoPushTokens (without duplication)
-        $addToSet: { expoPushTokens: pushToken },
-        // Append all incoming notifications to the "notifications" array
-        $push: {
-          notifications: {
-            $each: notifications,
-          },
-        },
-      },
-      { upsert: true, new: true }
-    );
-
-    // 3. Send an immediate success response
+ // 3. Send an immediate success response
     return res.status(200).json({ message: "Notifications scheduled and stored successfully." });
 
   } catch (error) {
@@ -134,7 +181,6 @@ router.post("/schedule", async (req, res) => {
     return res.status(500).json({ error: "Failed to schedule notifications." });
   }
 });
-
 
 // -----------------------------------------------------------------------------
 // Get User Schedules
