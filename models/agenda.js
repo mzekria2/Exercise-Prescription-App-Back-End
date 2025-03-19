@@ -1,8 +1,9 @@
-const Agenda = require("agenda");
+const { Agenda } = require("agenda");
 require("dotenv").config();
 
-const mongoConnectionString = `mongodb+srv://${process.env.MONGODB_USER}:${process.env.MONGODB_PASS}@${process.env.MONGODB_URL}/agenda-jobs`;
+const mongoConnectionString = `${process.env.MONGODB_URI}/test`;
 
+// ✅ Correct instantiation for Agenda v4.1.2
 const agenda = new Agenda({ db: { address: mongoConnectionString, collection: "jobs" } });
 
 // Define a job type for sending notifications
@@ -22,19 +23,30 @@ agenda.define("send notification", async (job) => {
           body,
         },
       ]);
-      console.log(`Notification sent to ${pushToken}`);
+      console.log(`✅ Notification sent to ${pushToken}`);
     } catch (error) {
-      console.error(`Error sending notification to ${pushToken}:`, error);
+      console.error(`❌ Error sending notification to ${pushToken}:, error`);
     }
   } else {
-    console.error(`Invalid Expo Push Token: ${pushToken}`);
+    console.error(`❌ Invalid Expo Push Token: ${pushToken}`);
   }
 });
 
 // Start Agenda
 (async () => {
   await agenda.start();
-  console.log("Agenda started");
+  console.log("✅ Agenda started successfully!");
 })();
 
+// Handle graceful shutdown
+process.on("SIGTERM", async () => {
+  await agenda.stop();
+  console.log("⏹️ Agenda stopped.");
+  process.exit(0);
+});
+
 module.exports = agenda;
+﻿
+Manuga
+manuga_h
+ 
