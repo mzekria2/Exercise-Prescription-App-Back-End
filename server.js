@@ -9,7 +9,7 @@ const { SecretManagerServiceClient } = require("@google-cloud/secret-manager");
 const secretManager = new SecretManagerServiceClient();
 const path = require("path");
 const fs = require("fs");
-const cookieParser = require("cookie-parser");
+
 
 const authMiddleware = require("./middleware/authenticateMiddleware");
 const videoRoutes = require("./routes/videos");
