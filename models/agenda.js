@@ -46,7 +46,4 @@ process.on("SIGTERM", async () => {
 });
 
 module.exports = agenda;
-﻿
-Manuga
-manuga_h
  
