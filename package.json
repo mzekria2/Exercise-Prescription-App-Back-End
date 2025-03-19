@@ -39,5 +39,8 @@
   },
   "devDependencies": {
     "nodemon": "^3.1.7"
+  },
+  "overrides": {
+    "mongodb": "6.15.0"
   }
 }
