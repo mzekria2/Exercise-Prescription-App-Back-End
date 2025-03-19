@@ -7,10 +7,6 @@ require("dotenv").config();
 const videoRoutes = require("./routes/videos");
 const scheduleRoutes = require("./routes/schedule-routes"); // Schedule routes
 
-// Initialize express app
-const app = express();
-const PORT = process.env.PORT || 3000;
-
 // Middleware
 app.use(cors());
 app.use(express.json());

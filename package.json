@@ -17,8 +17,14 @@
   "homepage": "https://github.com/mzekria2/Exercise-Prescription-App-Back-End#readme",
   "description": "",
   "dependencies": {
+    "@google-cloud/secret-manager": "^5.6.0",
+    "@google-cloud/speech": "^6.7.1",
+    "@google-cloud/storage": "^7.15.2",
+    "@google-cloud/translate": "^8.5.1",
+    "axios": "^1.7.9",
     "agenda": "^5.0.0",
     "bcryptjs": "^2.4.3",
+    "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
     "expo-server-sdk": "^3.12.0",
@@ -28,6 +34,7 @@
     "mongodb": "^6.10.0",
     "mongoose": "^8.8.1",
     "multer": "^1.4.5-lts.1",
+    "nodemailer": "^6.9.16",
     "node-cron": "^3.0.3"
   },
   "devDependencies": {

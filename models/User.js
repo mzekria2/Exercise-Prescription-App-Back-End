@@ -18,6 +18,13 @@ const userSchema = new mongoose.Schema({
     type: Date,
     default: Date.now,
   },
+  newPasswordToken: { 
+    type: String 
+  },
+  newPasswordExpires: { 
+    type: Date 
+  }
+
 });
 
 const User = mongoose.model('User', userSchema);
