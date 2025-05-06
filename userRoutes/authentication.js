@@ -23,31 +23,28 @@ const mailer = nodemailer.createTransport({
 
 // Register for stuff
 router.post("/register", async (req, res) => {
-  const { email, password, name } = req.body;
+  const { index, emailCipher, password, plainEmail } = req.body;
+  console.log(req.body);
 
   try {
     //check if user already registered
-    let user = await User.findOne({ email });
-    if (user) return res.status(400).json({ message: "User already exists" });
+    if (await User.findOne({ index }))
+      return res.status(400).json({ message: "Already exists" });
 
     // Hash password
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
 
     // Create new user
-    user = new User({ email, password: hashedPassword, name });
-    await user.save();
+    await new User({ index, emailCipher, password: hashedPassword }).save();
 
     // Send email
     const mailIt = {
       from: process.env.EMAIL,
-      to: email,
+      to: plainEmail,
       subject: "Success",
-      text: `Hello ${name},\n\nThank you for registering for HTC.\n\nRegards,\nThe HTC Team`,
+      text: `Hello,\n\nThank you for registering for HTC.\n\nRegards,\nThe HTC Team`,
     };
-
-    console.log("EMAIL:", process.env.EMAIL);
-    console.log("EMAIL_PASS:", process.env.EMAIL_PASS);
 
     mailer.sendMail(mailIt, (error, info) => {
       if (error) {
@@ -65,12 +62,11 @@ router.post("/register", async (req, res) => {
 
 //Login
 router.post("/login", async (req, res) => {
-  console.log("Login request:", req.body);
-  const { email, password } = req.body;
+  const { index, password } = req.body;
 
   try {
     //Seeing if user exists
-    const user = await User.findOne({ email });
+    const user = await User.findOne({ index });
     if (!user) return res.status(400).json({ message: "Invalid credentials" });
 
     //Checking the password stuff
@@ -80,12 +76,10 @@ router.post("/login", async (req, res) => {
 
     console.log("User:", user);
     //JWT token
-    const token = jwt.sign(
-      { userId: user._id, email: user.email },
-      process.env.JWT_SECRET,
-      { expiresIn: "1h" }
-    );
-    console.log("Token:", token);
+    const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, {
+      expiresIn: "1h",
+    });
+
     // Set the cookie with httpOnly, secure, and sameSite options
     res.cookie("token", token, {
       httpOnly: true, // Prevents JavaScript access
@@ -115,13 +109,23 @@ router.get("/profile", authenticateMiddleware, async (req, res) => {
 
 // PUT /api/auth/profile
 router.put("/profile", authenticateMiddleware, async (req, res) => {
-  const { email, name } = req.body;
+  const { index, emailCipher } = req.body;
 
   try {
+    // Build an update object
+    const updates = {};
+    if (index && emailCipher) {
+      updates.index = index;
+      updates.emailCipher = {
+        iv: emailCipher.iv,
+        ct: emailCipher.ct,
+        tag: emailCipher.tag,
+      };
+    }
     // Update user fields
     const updatedUser = await User.findByIdAndUpdate(
       req.user.userId,
-      { email, name },
+      updates,
       { new: true, runValidators: true } // Return the updated user
     ).select("-password"); // Exclude the password
 
@@ -136,9 +140,9 @@ router.put("/profile", authenticateMiddleware, async (req, res) => {
 });
 
 router.post("/forgot-password", async (req, res) => {
-  const { email } = req.body;
+  const { index, plainEmail } = req.body;
   try {
-    const userFound = await User.findOne({ email });
+    const userFound = await User.findOne({ index });
     if (!userFound) {
       return res.status(404).json({ message: "User not found" });
     }
@@ -148,7 +152,7 @@ router.post("/forgot-password", async (req, res) => {
     userFound.newPasswordExpires = Date.now() + TOKEN_TIME * 1000;
     await userFound.save();
 
-    const resetLink = `http://localhost:8081/reset-password/resetPassword?token=${newToken}&email=${userFound.email}`;
+    const resetLink = `http://10.0.0.86:8081/reset-password/resetPassword?token=${newToken}&index=${index}`;
 
     const mailer = nodemailer.createTransport({
       service: "gmail",
@@ -159,7 +163,7 @@ router.post("/forgot-password", async (req, res) => {
     });
     const mailIt = {
       from: process.env.EMAIL,
-      to: userFound.email,
+      to: plainEmail,
       subject: "Password Reset Request",
       html: `<p>You requested a password reset. Click <a href="${resetLink}">here</a> to reset your password. This link will expire in 1 hour.</p>`,
     };
@@ -173,10 +177,10 @@ router.post("/forgot-password", async (req, res) => {
 
 router.post("/reset-password", async (req, res) => {
   const { password } = req.body; // Extract the new password from the body
-  const { token, email } = req.query; // Extract token and email from the query parameters
+  const { token, index } = req.query; // Extract token and email from the query parameters
 
   try {
-    const user = await User.findOne({ email });
+    const user = await User.findOne({ index });
     if (!user || !user.newPasswordToken || !user.newPasswordExpires) {
       return res.status(400).json({ message: "Invalid or expired token" });
     }

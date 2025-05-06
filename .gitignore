@@ -2,3 +2,4 @@ node_modules
 .env
 uploads
 config/*.json
+service-account.json
